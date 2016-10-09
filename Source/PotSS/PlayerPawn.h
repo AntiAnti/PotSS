@@ -68,7 +68,7 @@ struct FIKSkeletonData
 	float fFootRightIK;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bRotateRibcage;
+	bool bRibcageYaw;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float fBending;
@@ -111,6 +111,24 @@ struct FIKSkeletonData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EHandState RightHandState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector HeadOffsetToNeck;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bRibcagePitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSittingDown;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector NeckOffsetToPelvis;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float fHeadHeight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float fJumpingOffset;
 };
 
 /*******************************************************************************************************************/
@@ -156,6 +174,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Navigation")
 	class UStaticMeshComponent* NavigationPointerMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Navigation")
+	class USkeletonIK* SkeletonIK;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Navigation")
 	float NavigationTeleportDistance;
 
@@ -173,33 +194,6 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Player")
 	float MovementSpeed;
-
-	/* Correlation head - right hand */
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FVector CorrelationResultLoc1;
-
-	/* Correlation head - left hand */
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FVector CorrelationResultLoc2;
-
-	/* Correlation head - right hand */
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FRotator CorrelationResultRot1;
-
-	/* Correlation head - left hand */
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FRotator CorrelationResultRot2;
-
-	/* Data to restore third person skeleton state in anim buleprint */
-	UPROPERTY(BlueprintReadOnly, Category = "IK")
-	FIKSkeletonData SkeletonTransformData;
-
-	UPROPERTY(BlueprintReadWrite, Category = "IK")
-	FVector IKAvatarLocation;
-	/*
-	UPROPERTY(BlueprintReadWrite, Category = "IK")
-	ACharacter* IKThirdPersonActor;
-	*/
 
 	UPROPERTY(BlueprintReadWrite, Category = "IK")
 	APlayerJumpingPawn* DebugIKAvatar;
@@ -244,16 +238,7 @@ public:
 	FVector GetActivePawnHead();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SteamVR")
-	FTransform GetRifleRelativeTransform(bool bUseHeadRotation = true/*, float nBodyRotationYaw = 0.0f*/);
-
-	UFUNCTION(BlueprintCallable, Category = "IK")
-	void CalculateBodyIKParams();
-
-	UFUNCTION(BlueprintCallable, Category = "IK")
-	void CalculateBodyIK(float DeltaTime = -1.0f);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "IK")
-	FTransform GetLastFootTargetTransform(EHandSide FootSide);
+	FTransform GetRifleRelativeTransform(const FTransform PelvisOffset, bool bUseHeadRotation = true);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Navigation")
 	bool IsAvatarRunning() { return IsAvatarRunningNow; };
@@ -304,42 +289,6 @@ private:
 	UPROPERTY()
 	bool bLeftTrackpadPressed;
 
-	/*Category = "IK"*/
-	UPROPERTY()
-	FTimerHandle hVRInputTimer;
-
-	UPROPERTY()
-	FTimerHandle hResetFootLTimer;
-
-	UPROPERTY()
-	FTimerHandle hResetFootRTimer;
-
-	/*Category = "IK"*/
-	UPROPERTY()
-	uint8 CurrentVRInputIndex;
-
-	/*UPROPERTY(Category = "IK")*/
-	FVRInputData VRInputData[CORR_SAVE_POINTS_NUM];
-
-	/*UPROPERTY(Category = "IK")*/
-	float cora[3][CORR_POINTS_NUM];
-	/*UPROPERTY(Category = "IK")*/
-	float corb[3][CORR_POINTS_NUM];
-	/*UPROPERTY(Category = "IK")*/
-	float corc[3][CORR_POINTS_NUM];
-
-	UPROPERTY()
-	float LastCameraYaw;
-	/*Category = "IK"*/
-	UPROPERTY()
-	float TargetCharacterYaw;
-
-	UPROPERTY()
-	bool ResetFootLocationL;
-
-	UPROPERTY()
-	bool ResetFootLocationR;
-
 	FCollisionQueryParams stTraceParams;
 
 	// Setup actor components
@@ -357,21 +306,6 @@ private:
 
 	UFUNCTION()
 	void MoveForward(float Value);
-
-	UFUNCTION()
-	void VRInputTimer_Tick();
-
-	UFUNCTION()
-	void ResetFootsTimerL_Tick();
-
-	UFUNCTION()
-	void ResetFootsTimerR_Tick();
-
-	UFUNCTION()
-	void GetCorrelationKoef(bool bCalcRotation, FVector& Head2Controller1, FVector& Head2Controller2, int32 StartIndex = -1);
-
-	UFUNCTION()
-	void CorrelateArrays(uint8 CompareType, int32 Num, float &r1, float &r2, float &r3);
 
 	UFUNCTION()
 	float DeltaAngle(FVector Angle1, FVector Angle2);
